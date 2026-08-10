@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 
-from harmprobe.utils.chat_templates import apply_llama3_user_template, get_llama3_eos_ids, setup_tokenizer
+from harmprobe.utils.chat_templates import apply_user_template, get_eos_ids, setup_tokenizer
 
 
 @dataclass
@@ -72,11 +72,11 @@ def generate_responses(
     """Generate one response per prompt (sequential; batch wrapper below)."""
     import torch
 
-    eos_ids = get_llama3_eos_ids(tokenizer)
+    eos_ids = get_eos_ids(tokenizer)
     device = next(model.parameters()).device
     outputs: list[str] = []
     for raw in prompts:
-        chat = apply_llama3_user_template(tokenizer, raw)
+        chat = apply_user_template(tokenizer, raw)
         inputs = tokenizer(
             chat,
             return_tensors="pt",

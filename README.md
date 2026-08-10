@@ -2,7 +2,7 @@
 
 Localize which transformer layers (and generation steps) encode **jailbreak-related harmfulness** in LLMs.
 
-This repo reproduces **Task B** end-to-end as run in the HarmProbe / Llama-3 experiments:
+This repo reproduces **Task B** end-to-end:
 
 1. **Dataset generation** — WildJailbreak `adversarial_harmful` and `adversarial_benign` pairs  
 2. **Hidden-state extraction** — all layers × 100 generation steps → HDF5  
@@ -14,24 +14,31 @@ Compare **base vs fine-tuned** models visually (side-by-side heatmaps). Do **not
 
 ---
 
+## Supported models
+
+| Model | Config | Layers | Hidden dim | Task B matrix |
+|-------|--------|--------|------------|---------------|
+| Llama-3.2-3B-Instruct | `configs/models/llama3_3b.yaml` | 28 | 3072 | 28 × 100 |
+| Llama-2-7B-chat | `configs/models/llama2_7b.yaml` | 32 | 4096 | 32 × 100 |
+| Qwen2.5-7B-Instruct | `configs/models/qwen2_5_7b.yaml` | 28 | 3584 | 28 × 100 |
+
+Each model has **base** and **fine-tuned** checkpoints. Fine-tuned weights are **not** redistributed — set `HARMPROBE_FT_MODEL` or `model_path` / `fine_tuned_model_path` in YAML.
+
+---
+
 ## Requirements
 
 - Python 3.10+
 - CUDA GPU (dataset WildGuard stages + extraction)
-- Hugging Face access:
-  - `meta-llama/Llama-3.2-3B-Instruct` (gated)
-  - `allenai/wildjailbreak` (gated)
-  - `allenai/wildguard`
-- Fine-tuned checkpoint path for FT arms (`HARMPROBE_FT_MODEL` or YAML `model_path` / `fine_tuned_model_path`)
-
-Fine-tuned weights are **not** redistributed here.
+- Hugging Face access to the chosen base model(s), `allenai/wildjailbreak`, and `allenai/wildguard`
+- Fine-tuned checkpoint path for FT arms
 
 ---
 
 ## Install
 
 ```bash
-git clone <your-repo-url> jailbreak-layer-localization
+git clone https://github.com/bk20-03/jailbreak-layer-localization.git
 cd jailbreak-layer-localization
 pip install -e ".[all]"
 ```
@@ -44,18 +51,17 @@ pip install -e ".[all]"
 
 ```bash
 export HF_TOKEN=...   # if models/datasets are gated
-export HARMPROBE_FT_MODEL=/path/to/Llama-3.2-3B-Instruct__seed-42   # required for FT stages
+# Fine-tuned checkpoint for the model you are running:
+export HARMPROBE_FT_MODEL=/path/to/your-finetuned-checkpoint
 ```
 
 ### 1) Generate Task B datasets (GPU)
 
-Builds:
-
-| Stage | WildJailbreak type | Output |
-|-------|--------------------|--------|
-| `harmful_base_generation` | `adversarial_harmful` | `data/generated/llama3/paired_dataset1.csv` |
-| `fine_tuned_compliance` | (from previous) | `data/generated/llama3/paired_dataset_finetuned.csv` (class 0) |
-| `benign_generation` | `adversarial_benign` | `data/generated/llama3/paired_dataset_benign_llama3.csv` (class 1) |
+| Model | Config |
+|-------|--------|
+| Llama-3 | `configs/datasets/llama3_task_b_dataset.yaml` |
+| Llama-2 | `configs/datasets/llama2_task_b_dataset.yaml` |
+| Qwen | `configs/datasets/qwen_task_b_dataset.yaml` |
 
 ```bash
 python -m harmprobe.runners.run_dataset_pipeline \
@@ -65,19 +71,17 @@ python -m harmprobe.runners.run_dataset_pipeline \
   --config configs/datasets/llama3_task_b_dataset.yaml --execute --device cuda
 ```
 
-After generation, copy (or symlink) CSVs into the prompt paths used by extraction:
+After generation, copy CSVs into the matching `data/prompts/` folder used by extraction (or keep using the committed production CSVs below).
 
-```bash
-mkdir -p data/prompts
-cp data/generated/llama3/paired_dataset_finetuned.csv data/prompts/
-cp data/generated/llama3/paired_dataset_benign_llama3.csv data/prompts/
-```
+**Skip generation:** production prompt CSVs are shipped under:
 
-**Skip generation:** this repo already ships the production prompt CSVs under [`data/prompts/`](data/prompts/) from the validated Llama-3 Task B run. You can go straight to extraction.
+- `data/prompts/` — Llama-3  
+- `data/prompts/llama2/` — Llama-2  
+- `data/prompts/qwen/` — Qwen  
 
 ### 2) Extract hidden states (GPU)
 
-All layers, 100 steps, class 0 + class 1, base + fine-tuned:
+Example for Llama-3 (same pattern for `llama2_*` / `qwen_*` configs):
 
 ```bash
 python -m harmprobe.runners.run_extraction --config configs/extraction/llama3_class0_base.yaml
@@ -86,18 +90,36 @@ python -m harmprobe.runners.run_extraction --config configs/extraction/llama3_cl
 python -m harmprobe.runners.run_extraction --config configs/extraction/llama3_class1_finetuned.yaml
 ```
 
-Outputs land in `data/hiddens/*.h5` (~GB scale; gitignored).
+Llama-2 / Qwen:
 
-### 3) Probe Task B (CPU/sklearn once H5 exists)
+```bash
+python -m harmprobe.runners.run_extraction --config configs/extraction/llama2_class0_base.yaml
+# ... class1_base, class0_finetuned, class1_finetuned
+
+python -m harmprobe.runners.run_extraction --config configs/extraction/qwen_class0_base.yaml
+# ... class1_base, class0_finetuned, class1_finetuned
+```
+
+HDF5 outputs (gitignored):
+
+- `data/hiddens/` (Llama-3)  
+- `data/hiddens/llama2/`  
+- `data/hiddens/qwen/`  
+
+### 3) Probe Task B
 
 ```bash
 python -m harmprobe.runners.run_probe_experiment \
   --config configs/experiments/llama3_task_b_base_ft.yaml
+
+python -m harmprobe.runners.run_probe_experiment \
+  --config configs/experiments/llama2_task_b_base_ft.yaml
+
+python -m harmprobe.runners.run_probe_experiment \
+  --config configs/experiments/qwen_task_b_base_ft.yaml
 ```
 
-Results: `runs/llama3_task_b_base_ft/` — V-info matrices, heatmaps, HTML comparison.
-
-Example heatmaps from the validated run are in [`examples/figures/`](examples/figures/).
+Example heatmaps from validated runs: [`examples/figures/`](examples/figures/) (`llama3/`, `llama2/`, `qwen/`).
 
 ---
 
@@ -124,15 +146,14 @@ Task B probe labels: class `1 → 0`, class `0 → 1` (see [`configs/tasks/task_
 ## Repository layout
 
 ```text
-configs/datasets/     Task B WildJailbreak pipeline
-configs/extraction/   class0/class1 × base/finetuned
-configs/experiments/  probing run
-configs/tasks/        Task B label map + H5 paths
-data/prompts/         committed prompt CSVs (paper run)
-data/generated/       pipeline CSV outputs (gitignored)
-data/hiddens/         extracted HDF5 (gitignored)
-examples/figures/     reference base / FT heatmaps
-src/harmprobe/        datasets + extraction + probing
+configs/models/         llama3_3b, llama2_7b, qwen2_5_7b
+configs/datasets/       Task B WildJailbreak pipelines (per model)
+configs/extraction/     class0/class1 × base/finetuned (per model)
+configs/experiments/    probing runs (per model)
+data/prompts/           committed prompt CSVs
+data/hiddens/           extracted HDF5 (gitignored)
+examples/figures/       reference base / FT heatmaps
+src/harmprobe/          datasets + extraction + probing
 ```
 
 ---
@@ -149,6 +170,6 @@ pytest tests/ -q
 ## Notes
 
 - Harmful + FT stages need **WildGuard on GPU**; benign uses a keyword refusal judge.  
-- Extraction is GPU-heavy (full 28×100 activations).  
+- Extraction is GPU-heavy (full layer × 100 activations).  
 - Probing does not need a GPU once HDF5 files exist.  
 - Task A (compliance vs refusal / class 2) is intentionally out of scope.

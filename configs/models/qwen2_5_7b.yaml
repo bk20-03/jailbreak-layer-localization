@@ -1,0 +1,6 @@
+model_id: Qwen/Qwen2.5-7B-Instruct
+model_family: qwen
+n_layers: 28
+hidden_dim: 3584
+notes: >
+  Qwen2.5-7B-Instruct. Task B uses 28 layers × 100 steps.

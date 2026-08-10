@@ -1,0 +1,27 @@
+experiment_id: llama2_class0_finetuned
+model_id: meta-llama/Llama-2-7b-chat-hf
+# Set model_path or HARMPROBE_FT_MODEL to your Llama-2 fine-tuned checkpoint
+checkpoint_type: fine_tuned
+canonical_class: 0
+n_layers: 32
+hidden_dim: 4096
+tokenizer_path: meta-llama/Llama-2-7b-chat-hf
+source_csv: data/prompts/llama2/paired_dataset_finetuned.csv
+prompt_column: adversarial_raw
+filter_condition:
+  column: adversarial_harmful
+  value: 1
+max_samples: 102
+output_h5: data/hiddens/llama2/hidden_states_class0_finetuned.h5
+run_dir: runs/extractions/llama2_class0_finetuned
+layers:
+  mode: all
+steps:
+  mode: default
+default_steps: 100
+batch_size: 1
+dtype: float16
+device: cuda
+seed: 42
+overwrite: false
+local_files_only: false

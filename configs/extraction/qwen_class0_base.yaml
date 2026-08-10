@@ -1,0 +1,26 @@
+experiment_id: qwen_class0_base
+model_id: Qwen/Qwen2.5-7B-Instruct
+model_path: Qwen/Qwen2.5-7B-Instruct
+tokenizer_path: Qwen/Qwen2.5-7B-Instruct
+checkpoint_type: base
+canonical_class: 0
+n_layers: 28
+hidden_dim: 3584
+source_csv: data/prompts/qwen/paired_dataset_finetuned.csv
+prompt_column: adversarial_raw
+filter_condition:
+  column: adversarial_harmful
+  value: 1
+output_h5: data/hiddens/qwen/hidden_states_class0_base.h5
+run_dir: runs/extractions/qwen_class0_base
+layers:
+  mode: all
+steps:
+  mode: default
+default_steps: 100
+batch_size: 1
+dtype: float16
+device: cuda
+seed: 42
+overwrite: false
+local_files_only: false

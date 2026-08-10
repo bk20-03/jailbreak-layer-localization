@@ -42,7 +42,11 @@ def validate_model_paths(cfg: dict[str, Any]) -> dict[str, Any]:
             info[label] = {"path": "", "type": "unset", "exists": False}
             continue
         p = Path(path)
-        if str(path).startswith("meta-llama/") or str(path).startswith("allenai/"):
+        if (
+            str(path).startswith("meta-llama/")
+            or str(path).startswith("allenai/")
+            or str(path).startswith("Qwen/")
+        ):
             info[label] = {"path": path, "type": "hf_id", "exists": None}
         else:
             info[label] = {"path": path, "type": "local", "exists": p.exists()}

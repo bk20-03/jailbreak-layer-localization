@@ -28,10 +28,17 @@ def load_yaml(path: Path) -> dict[str, Any]:
 
 
 def _is_hf_id(path: str) -> bool:
+    known_prefixes = (
+        "meta-llama/",
+        "allenai/",
+        "Qwen/",
+        "mistralai/",
+        "google/",
+    )
+    if any(path.startswith(p) for p in known_prefixes):
+        return True
     return bool(path) and (
-        path.startswith("meta-llama/")
-        or path.startswith("allenai/")
-        or ("/" in path and not path.startswith("/") and not Path(path).exists())
+        "/" in path and not path.startswith("/") and not Path(path).exists()
     )
 
 

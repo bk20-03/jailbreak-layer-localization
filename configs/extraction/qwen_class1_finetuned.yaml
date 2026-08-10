@@ -1,0 +1,23 @@
+experiment_id: qwen_class1_finetuned
+model_id: Qwen/Qwen2.5-7B-Instruct
+checkpoint_type: fine_tuned
+canonical_class: 1
+n_layers: 28
+hidden_dim: 3584
+tokenizer_path: Qwen/Qwen2.5-7B-Instruct
+source_csv: data/prompts/qwen/paired_dataset_benign.csv
+prompt_column: adversarial_raw
+max_samples: 102
+output_h5: data/hiddens/qwen/hidden_states_class1_finetuned.h5
+run_dir: runs/extractions/qwen_class1_finetuned
+layers:
+  mode: all
+steps:
+  mode: default
+default_steps: 100
+batch_size: 1
+dtype: float16
+device: cuda
+seed: 42
+overwrite: false
+local_files_only: false

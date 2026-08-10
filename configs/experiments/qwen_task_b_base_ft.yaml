@@ -1,0 +1,18 @@
+experiment_id: qwen_task_b_base_ft
+model: configs/models/qwen2_5_7b.yaml
+task: configs/tasks/task_b_benign_vs_harmful.yaml
+output_dir: runs/qwen_task_b_base_ft
+checkpoints: [base, finetuned]
+layers:
+  mode: all
+steps:
+  mode: default
+seed: 42
+h5_paths:
+  base:
+    class1_base: data/hiddens/qwen/hidden_states_class1_base.h5
+    class0_base: data/hiddens/qwen/hidden_states_class0_base.h5
+  finetuned:
+    class1_finetuned: data/hiddens/qwen/hidden_states_class1_finetuned.h5
+    class0_finetuned: data/hiddens/qwen/hidden_states_class0_finetuned.h5
+reference_outputs: examples/figures/qwen

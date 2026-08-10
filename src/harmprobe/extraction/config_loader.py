@@ -24,11 +24,20 @@ def load_yaml(path: Path) -> dict[str, Any]:
 
 
 def _is_hf_id(path: str) -> bool:
+    known_prefixes = (
+        "meta-llama/",
+        "allenai/",
+        "Qwen/",
+        "mistralai/",
+        "google/",
+    )
+    if any(path.startswith(p) for p in known_prefixes):
+        return True
     return "/" in path and not path.startswith("/") and not Path(path).exists()
 
 
 def _resolve_model_path(path: str, *, base: Path, workspace_root: Path) -> str:
-    if _is_hf_id(path) or path.startswith("meta-llama/") or path.startswith("allenai/"):
+    if _is_hf_id(path):
         return path
     return str(resolve_path(path, base=base, workspace_root=workspace_root))
 

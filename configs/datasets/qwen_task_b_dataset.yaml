@@ -1,0 +1,43 @@
+pipeline_id: qwen_task_b_dataset
+model:
+  name: qwen2_5_7b
+  base_model_path: Qwen/Qwen2.5-7B-Instruct
+  fine_tuned_model_path: ""
+  tokenizer_path: Qwen/Qwen2.5-7B-Instruct
+
+wildguard:
+  model_path: allenai/wildguard
+  enabled: true
+
+dataset:
+  source: allenai/wildjailbreak
+  split: train
+  harmful_type: adversarial_harmful
+  benign_type: adversarial_benign
+
+limits:
+  max_harmful_samples: 5000
+  max_benign_samples: 5000
+  max_new_tokens: 300
+  max_input_tokens: 512
+  batch_size: 8
+
+outputs:
+  harmful_base_csv: data/generated/qwen/paired_dataset1.csv
+  harmful_ft_csv: data/generated/qwen/paired_dataset_finetuned.csv
+  benign_csv: data/generated/qwen/paired_dataset_benign.csv
+
+run_dir: runs/datasets/qwen_task_b_dataset
+overwrite: false
+seed: 42
+
+stages:
+  - harmful_base_generation
+  - fine_tuned_compliance
+  - benign_generation
+
+execution:
+  mode: local
+  device: auto
+  use_slurm: false
+  allow_wildguard_on_cpu: false

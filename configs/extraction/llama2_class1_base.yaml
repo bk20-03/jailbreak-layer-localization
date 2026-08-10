@@ -1,0 +1,24 @@
+experiment_id: llama2_class1_base
+model_id: meta-llama/Llama-2-7b-chat-hf
+model_path: meta-llama/Llama-2-7b-chat-hf
+tokenizer_path: meta-llama/Llama-2-7b-chat-hf
+checkpoint_type: base
+canonical_class: 1
+n_layers: 32
+hidden_dim: 4096
+source_csv: data/prompts/llama2/paired_dataset_benign.csv
+prompt_column: adversarial_raw
+max_samples: 102
+output_h5: data/hiddens/llama2/hidden_states_class1_base.h5
+run_dir: runs/extractions/llama2_class1_base
+layers:
+  mode: all
+steps:
+  mode: default
+default_steps: 100
+batch_size: 1
+dtype: float16
+device: cuda
+seed: 42
+overwrite: false
+local_files_only: false

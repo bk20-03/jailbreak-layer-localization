@@ -1,3 +1,2 @@
-Reference figures from the validated Llama-3 Task B run
-(`llama3_task_b_base_ft`). Base and fine-tuned V-info heatmaps only —
+Reference Task B V-info heatmaps (base and fine-tuned only).
 FT−base difference plots are intentionally omitted.
