@@ -24,7 +24,7 @@ from harmprobe.runners.config_loader import (
 )
 from harmprobe.runners.status_tracker import mark_completed, mark_failed, mark_running
 from harmprobe.utils.splits import make_prompt_splits
-from harmprobe.visualization.heatmaps import plot_layer_step_heatmap
+from harmprobe.visualization.heatmaps import plot_layer_profiles_grid, plot_layer_step_heatmap
 from harmprobe.visualization.html_dashboard import build_comparison_dashboard
 
 
@@ -226,6 +226,12 @@ def _run_experiment_body(config_path: Path, cfg: dict, output_dir: Path) -> Path
             for ck, store in checkpoint_store.items()
         }
         if has_base and has_ft:
+            profile_path = plot_layer_profiles_grid(
+                checkpoint_store["base"]["matrices"]["vinfo_bits"],
+                checkpoint_store["fine_tuned"]["matrices"]["vinfo_bits"],
+                output_path=matrix_dir / "harmful_vs_benign_vinfo_layer_profiles.png",
+            )
+            matrix_paths["harmful_vs_benign_vinfo_layer_profiles"] = str(profile_path)
             build_comparison_dashboard(
                 {
                     "base": checkpoint_store["base"]["matrices"]["vinfo_bits"],

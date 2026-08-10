@@ -1,16 +1,24 @@
 # Jailbreak Layer Localization (Task B)
 
-Localize which transformer layers (and generation steps) encode **jailbreak-related harmfulness** in LLMs.
+**Main objective:** localize which transformer layers (and generation steps) encode
+**jailbreak-related harmfulness** — i.e. where hidden states most strongly separate
+*harmful complied* vs *benign complied* responses.
 
 This repo reproduces **Task B** end-to-end:
 
 1. **Dataset generation** — WildJailbreak `adversarial_harmful` and `adversarial_benign` pairs  
 2. **Hidden-state extraction** — all layers × 100 generation steps → HDF5  
-3. **Linear probing** — per-layer L2 logistic regression + **V-usable information** heatmaps  
+3. **Linear probing** — per-layer L2 logistic regression + **V-usable information**  
 
-**Question answered:** where in the network does the hidden state most strongly separate *harmful complied* vs *benign complied* responses?
+**Secondary comparison:** the same probes are run on a **base** checkpoint and a
+**deep safety alignment** fine-tuned checkpoint, only to see whether fine-tuning
+changes the internal harmfulness signal. Fine-tuning itself is **not** the goal of
+this repository; see
+[Unispac/shallow-vs-deep-alignment](https://github.com/Unispac/shallow-vs-deep-alignment)
+for that method. Do **not** subtract FT − base matrices (probes are trained independently).
 
-Compare **base vs fine-tuned** models visually (side-by-side heatmaps). Do **not** subtract FT − base matrices — probes are trained independently.
+Primary example figures are **per-layer profile grids** (Base vs Fine-tuned V-info
+across steps for every layer), matching the analysis style of `output1.png`.
 
 ---
 
@@ -22,7 +30,9 @@ Compare **base vs fine-tuned** models visually (side-by-side heatmaps). Do **not
 | Llama-2-7B-chat | `configs/models/llama2_7b.yaml` | 32 | 4096 | 32 × 100 |
 | Qwen2.5-7B-Instruct | `configs/models/qwen2_5_7b.yaml` | 28 | 3584 | 28 × 100 |
 
-Each model has **base** and **fine-tuned** checkpoints. Fine-tuned weights are **not** redistributed — set `HARMPROBE_FT_MODEL` or `model_path` / `fine_tuned_model_path` in YAML.
+Each model has **base** and **fine-tuned** (DSA) checkpoints. Fine-tuned weights are
+**not** redistributed — set `HARMPROBE_FT_MODEL` or YAML `model_path` /
+`fine_tuned_model_path`.
 
 ---
 
@@ -121,7 +131,12 @@ python -m harmprobe.runners.run_probe_experiment \
   --config configs/experiments/qwen_task_b_base_ft.yaml
 ```
 
-Example heatmaps from validated runs: [`examples/figures/`](examples/figures/) (`llama3/`, `llama2/`, `qwen/`).
+Primary figures from validated runs (one subplot per layer; Base vs Fine-tuned):
+
+[`examples/figures/`](examples/figures/) → `*/harmful_vs_benign_vinfo_layer_profiles.png`
+
+The probe runner also writes this figure to
+`runs/<experiment>/html_vinfo_step_dashboard/harmful_vs_benign_vinfo_layer_profiles.png`.
 
 ---
 
@@ -136,12 +151,15 @@ Task B probe labels: class `1 → 0`, class `0 → 1` (see [`configs/tasks/task_
 
 ---
 
-## Reading the heatmaps
+## Reading the figures
 
-- Rows = transformer layers, columns = generation steps  
-- Cell value = **V-usable information** (bits) about harmful vs benign  
-- Brighter / higher = stronger recoverable jailbreak-related signal at that layer×step  
-- Inspect base and fine-tuned heatmaps separately; do not treat their difference as a primary result  
+Primary figure (`harmful_vs_benign_vinfo_layer_profiles.png`):
+
+- One subplot **per layer** (all layers in one figure)  
+- X-axis = generation step; Y-axis = V-info (bits)  
+- Blue = base, orange = fine-tuned (DSA)  
+- Higher curve = stronger recoverable harmful-vs-benign signal at that layer/step  
+- Compare curves visually; do not treat FT − base as a primary result  
 
 ---
 
@@ -154,7 +172,7 @@ configs/extraction/     class0/class1 × base/finetuned (per model)
 configs/experiments/    probing runs (per model)
 data/prompts/{llama3,llama2,qwen}/   committed prompt CSVs
 data/hiddens/{llama3,llama2,qwen}/   extracted HDF5 (gitignored)
-examples/figures/{llama3,llama2,qwen}/  reference base / FT heatmaps
+examples/figures/{llama3,llama2,qwen}/  reference layer-profile figures
 src/harmprobe/          datasets + extraction + probing
 ```
 
