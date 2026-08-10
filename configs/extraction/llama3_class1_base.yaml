@@ -1,11 +1,15 @@
 experiment_id: llama3_class1_base
 model_id: meta-llama/Llama-3.2-3B-Instruct
+model_path: meta-llama/Llama-3.2-3B-Instruct
+tokenizer_path: meta-llama/Llama-3.2-3B-Instruct
 checkpoint_type: base
 canonical_class: 1
-source_csv: data/prompts/paired_dataset_benign_llama3.csv
+n_layers: 28
+hidden_dim: 3072
+source_csv: data/prompts/llama3/paired_dataset_benign.csv
 prompt_column: adversarial_raw
 max_samples: 102
-output_h5: data/hiddens/hidden_states_class1_base.h5
+output_h5: data/hiddens/llama3/hidden_states_class1_base.h5
 run_dir: runs/extractions/llama3_class1_base
 layers:
   mode: all

@@ -1,8 +1,13 @@
-"""Unit tests for Task B probing core logic."""
+"""Unit tests for Task B probing core logic and extraction config hygiene."""
+
+from pathlib import Path
 
 import numpy as np
+import yaml
 
+from harmprobe.extraction.config_loader import load_extraction_config
 from harmprobe.probing.metrics import compute_vinfo_bits, entropy_bits
+from harmprobe.runners.config_loader import find_framework_root
 from harmprobe.utils.splits import make_prompt_splits
 
 
@@ -26,3 +31,27 @@ def test_task_b_split_sizes():
     assert len(ids_test) == 31
     assert len(set(ids_train) & set(ids_val)) == 0
     assert len(set(ids_train) & set(ids_test)) == 0
+
+
+def test_extraction_configs_have_matching_max_samples():
+    root = find_framework_root()
+    paths = sorted((root / "configs" / "extraction").glob("*_class*_*.yaml"))
+    assert paths, "expected extraction configs"
+    for path in paths:
+        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
+        assert "max_samples" in raw, f"{path.name} missing max_samples"
+        assert int(raw["max_samples"]) == 102, f"{path.name} max_samples != 102"
+        assert "n_layers" in raw and "hidden_dim" in raw, f"{path.name} missing dims"
+        assert "model_id" in raw, f"{path.name} missing model_id"
+        cfg = load_extraction_config(path)
+        assert cfg["max_samples"] == 102
+        assert cfg["n_layers"] == int(raw["n_layers"])
+        assert cfg["hidden_dim"] == int(raw["hidden_dim"])
+
+
+def test_prompt_layout_per_model():
+    root = find_framework_root()
+    for family in ("llama3", "llama2", "qwen"):
+        d = root / "data" / "prompts" / family
+        assert (d / "paired_dataset_finetuned.csv").is_file(), family
+        assert (d / "paired_dataset_benign.csv").is_file(), family

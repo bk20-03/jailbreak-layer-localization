@@ -13,6 +13,12 @@ from harmprobe.runners.status_tracker import mark_completed, mark_failed, mark_r
 
 
 def _validate_before_run(cfg: dict) -> None:
+    if cfg.get("checkpoint_type") != "base" and not cfg.get("model_path"):
+        raise ValueError(
+            "Fine-tuned extraction requires model_path in the YAML or "
+            "HARMPROBE_FT_MODEL in the environment."
+        )
+
     source = Path(cfg["source_csv"])
     if not source.is_file():
         raise FileNotFoundError(f"Source CSV not found: {source}")

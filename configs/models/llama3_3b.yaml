@@ -1,3 +1,6 @@
 model_id: meta-llama/Llama-3.2-3B-Instruct
+model_family: llama3
 n_layers: 28
 hidden_dim: 3072
+notes: >
+  Llama-3.2-3B-Instruct. Task B uses 28 layers × 100 steps.

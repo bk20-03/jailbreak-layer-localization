@@ -3,5 +3,4 @@ model_family: llama2
 n_layers: 32
 hidden_dim: 4096
 notes: >
-  Llama-2-7B-chat. Task B uses 32 layers × 100 steps. Class-0 H5 files use the
-  cleaned_100 suffix in the original jailbreaks layout.
+  Llama-2-7B-chat. Task B uses 32 layers × 100 steps.

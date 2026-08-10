@@ -17,10 +17,11 @@ test_size: 0.15
 val_size: 0.15
 seed: 42
 max_iter: 3000
+# Default H5 layout for Llama-3; Llama-2/Qwen experiments override h5_paths.
 h5_paths:
   base:
-    class1_base: data/hiddens/hidden_states_class1_base.h5
-    class0_base: data/hiddens/hidden_states_class0_base.h5
+    class1_base: data/hiddens/llama3/hidden_states_class1_base.h5
+    class0_base: data/hiddens/llama3/hidden_states_class0_base.h5
   finetuned:
-    class1_finetuned: data/hiddens/hidden_states_class1_finetuned.h5
-    class0_finetuned: data/hiddens/hidden_states_class0_finetuned.h5
+    class1_finetuned: data/hiddens/llama3/hidden_states_class1_finetuned.h5
+    class0_finetuned: data/hiddens/llama3/hidden_states_class0_finetuned.h5

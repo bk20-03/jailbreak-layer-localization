@@ -75,9 +75,11 @@ After generation, copy CSVs into the matching `data/prompts/` folder used by ext
 
 **Skip generation:** production prompt CSVs are shipped under:
 
-- `data/prompts/` — Llama-3  
+- `data/prompts/llama3/` — Llama-3  
 - `data/prompts/llama2/` — Llama-2  
 - `data/prompts/qwen/` — Qwen  
+
+Extraction uses `max_samples: 102` per class (first 102 rows after filtering) to match published probe sizes. Shipped CSVs may be larger; only the capped subset is extracted.
 
 ### 2) Extract hidden states (GPU)
 
@@ -102,7 +104,7 @@ python -m harmprobe.runners.run_extraction --config configs/extraction/qwen_clas
 
 HDF5 outputs (gitignored):
 
-- `data/hiddens/` (Llama-3)  
+- `data/hiddens/llama3/`  
 - `data/hiddens/llama2/`  
 - `data/hiddens/qwen/`  
 
@@ -150,9 +152,9 @@ configs/models/         llama3_3b, llama2_7b, qwen2_5_7b
 configs/datasets/       Task B WildJailbreak pipelines (per model)
 configs/extraction/     class0/class1 × base/finetuned (per model)
 configs/experiments/    probing runs (per model)
-data/prompts/           committed prompt CSVs
-data/hiddens/           extracted HDF5 (gitignored)
-examples/figures/       reference base / FT heatmaps
+data/prompts/{llama3,llama2,qwen}/   committed prompt CSVs
+data/hiddens/{llama3,llama2,qwen}/   extracted HDF5 (gitignored)
+examples/figures/{llama3,llama2,qwen}/  reference base / FT heatmaps
 src/harmprobe/          datasets + extraction + probing
 ```
 
@@ -170,6 +172,9 @@ pytest tests/ -q
 ## Notes
 
 - Harmful + FT stages need **WildGuard on GPU**; benign uses a keyword refusal judge.  
-- Extraction is GPU-heavy (full layer × 100 activations).  
+- Extraction is GPU-heavy (full layer × 100 activations) and caps at **102 samples/class**.  
 - Probing does not need a GPU once HDF5 files exist.  
-- Task A (compliance vs refusal / class 2) is intentionally out of scope.
+- Fine-tuned checkpoints are **not** redistributed; set `HARMPROBE_FT_MODEL` or YAML `model_path` per model.  
+- Published Qwen benign CSV is smaller (~265 rows) than the Llama dumps (~5k); extraction still takes the first 102.  
+- Task A (compliance vs refusal / class 2) is intentionally out of scope.  
+- Do **not** treat FT − base V-info differences as primary results (probes are trained independently).

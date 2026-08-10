@@ -89,27 +89,26 @@ def _load_model_and_tokenizer(cfg: dict[str, Any]):
             "Install with: pip install torch transformers tqdm"
         ) from exc
 
+    from harmprobe.utils.chat_templates import setup_tokenizer
+
     _setup_hf_env(cfg)
-    local_only = cfg.get("local_files_only", True)
+    local_only = cfg.get("local_files_only", False)
 
     tokenizer = AutoTokenizer.from_pretrained(
         cfg["tokenizer_path"],
         local_files_only=local_only,
     )
-    if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.padding_side = "left"
+    tokenizer = setup_tokenizer(tokenizer)
 
     if tokenizer.chat_template is None and cfg["checkpoint_type"] != "base":
-        from harmprobe.extraction.config_loader import DEFAULT_BASE_MODEL
-
+        base_tok_path = cfg.get("base_tokenizer_path") or cfg.get("model_id")
         base_tok = AutoTokenizer.from_pretrained(
-            DEFAULT_BASE_MODEL,
+            base_tok_path,
             local_files_only=local_only,
         )
         if base_tok.chat_template:
             tokenizer.chat_template = base_tok.chat_template
-            print("Chat template copied from base tokenizer.")
+            print(f"Chat template copied from base tokenizer: {base_tok_path}")
 
     dtype_map = {
         "float16": torch.float16,
@@ -129,29 +128,22 @@ def _load_model_and_tokenizer(cfg: dict[str, Any]):
     if tokenizer.chat_template is None:
         raise ValueError(
             f"No chat_template on tokenizer for {cfg['model_path']}. "
-            "Set tokenizer_path to the base model."
+            "Set tokenizer_path to the matching base instruct model."
         )
 
     return model, tokenizer
 
 
 def _get_eos_ids(tokenizer) -> list[int]:
-    eos_ids: list[int] = []
-    if tokenizer.eos_token_id is not None:
-        eos_ids.append(tokenizer.eos_token_id)
-    eot_id = tokenizer.convert_tokens_to_ids("<|eot_id|>")
-    if isinstance(eot_id, int) and eot_id >= 0 and eot_id not in eos_ids:
-        eos_ids.append(eot_id)
-    return eos_ids
+    from harmprobe.utils.chat_templates import get_eos_ids
+
+    return get_eos_ids(tokenizer)
 
 
 def _apply_chat_template(tokenizer, text: str) -> str:
-    messages = [{"role": "user", "content": text.strip()}]
-    return tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
-    )
+    from harmprobe.utils.chat_templates import apply_user_template
+
+    return apply_user_template(tokenizer, text)
 
 
 def extract_hidden_states(cfg: dict[str, Any]) -> Path:

@@ -21,6 +21,7 @@ dependencies = [
 datasets = ["torch", "transformers", "datasets", "tqdm", "huggingface_hub"]
 extraction = ["torch", "transformers", "tqdm", "huggingface_hub"]
 all = ["torch", "transformers", "datasets", "tqdm", "huggingface_hub"]
+dev = ["pytest"]
 
 [project.scripts]
 run-task-b-dataset = "harmprobe.runners.run_dataset_pipeline:main"

@@ -253,7 +253,7 @@ def main(argv: list[str] | None = None) -> None:
     parser.add_argument(
         "--config",
         required=True,
-        help="Path to experiment YAML (e.g. configs/experiments/llama3_task_a_base_ft.yaml)",
+        help="Path to experiment YAML (e.g. configs/experiments/llama3_task_b_base_ft.yaml)",
     )
     args = parser.parse_args(argv)
     config_path = Path(args.config).resolve()
