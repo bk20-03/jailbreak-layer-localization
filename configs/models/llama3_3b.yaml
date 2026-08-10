@@ -1,0 +1,3 @@
+model_id: meta-llama/Llama-3.2-3B-Instruct
+n_layers: 28
+hidden_dim: 3072

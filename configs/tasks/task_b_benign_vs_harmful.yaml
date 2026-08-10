@@ -1,0 +1,26 @@
+task_id: task_b_benign_vs_harmful
+task_type: benign_vs_harmful
+canonical_classes: [1, 0]
+load_order: [1, 0]
+probe_label_map:
+  1: 0
+  0: 1
+n_steps: 100
+c_values: [1.0e-6, 3.0e-6, 1.0e-5, 3.0e-5, 1.0e-4, 3.0e-4, 1.0e-3, 3.0e-3, 1.0e-2]
+cv_mode: group_kfold
+cv_folds: 5
+cv_data: train_only
+class_weight: null
+prompt_weighting: true
+split_mode: holdout_30_then_50
+test_size: 0.15
+val_size: 0.15
+seed: 42
+max_iter: 3000
+h5_paths:
+  base:
+    class1_base: data/hiddens/hidden_states_class1_base.h5
+    class0_base: data/hiddens/hidden_states_class0_base.h5
+  finetuned:
+    class1_finetuned: data/hiddens/hidden_states_class1_finetuned.h5
+    class0_finetuned: data/hiddens/hidden_states_class0_finetuned.h5

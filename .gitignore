@@ -1,0 +1,31 @@
+# Generated / heavy artifacts
+data/generated/**
+!data/generated/.gitkeep
+data/hiddens/**
+!data/hiddens/.gitkeep
+runs/**
+!runs/.gitkeep
+*.h5
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.pytest_cache/
+.venv/
+venv/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.log
+
+# Secrets / local overrides
+.env
+*.pt
+*.bin
+*.safetensors

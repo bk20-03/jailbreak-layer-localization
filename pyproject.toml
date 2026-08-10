@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jailbreak-layer-localization"
+version = "0.1.0"
+description = "Task B: localize jailbreak-related harmfulness in LLM layers via dataset generation, hidden-state extraction, and linear probing"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "pandas",
+    "h5py",
+    "scikit-learn",
+    "matplotlib",
+    "pyyaml",
+]
+
+[project.optional-dependencies]
+datasets = ["torch", "transformers", "datasets", "tqdm", "huggingface_hub"]
+extraction = ["torch", "transformers", "tqdm", "huggingface_hub"]
+all = ["torch", "transformers", "datasets", "tqdm", "huggingface_hub"]
+
+[project.scripts]
+run-task-b-dataset = "harmprobe.runners.run_dataset_pipeline:main"
+run-task-b-extraction = "harmprobe.runners.run_extraction:main"
+run-task-b-probe = "harmprobe.runners.run_probe_experiment:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
