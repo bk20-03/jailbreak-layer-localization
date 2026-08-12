@@ -74,6 +74,10 @@ middle-layer peak is trustworthy:
 - Repeated grouped cross-validation over prompts  
 - Stronger regularization via an extended `C` grid and the **1-SE** rule  
 
+This recipe is implemented in `src/harmprobe/probing/corrected_overfit.py` and
+enabled by `configs/tasks/task_b_benign_vs_harmful_corrected.yaml` (used by the
+`*_task_b_corrected.yaml` experiment configs in Step 3).
+
 After this correction, train–test gaps drop sharply (especially on Llama-3), and
 early-layer V-info falls near zero while the middle-layer peak remains.
 
@@ -157,19 +161,21 @@ HDF5 files go to `data/hiddens/{llama3,llama2,qwen}/` (not committed).
 | class0 | Adversarial harmful, complied |
 | class1 | Adversarial benign, complied |
 
-### Step 3 — Probe and plot
+### Step 3 — Probe and plot (overfitting-corrected)
 
-Once the HDF5 files exist, probing can run on CPU:
+Once the HDF5 files exist, probing can run on CPU. Use the **corrected**
+configs so results match the published figures (PCA-30, 12 train steps,
+repeated grouped CV, extended `C` grid, 1-SE rule):
 
 ```bash
 python -m harmprobe.runners.run_probe_experiment \
-  --config configs/experiments/llama3_task_b_base_ft.yaml
+  --config configs/experiments/llama3_task_b_corrected.yaml
 
 python -m harmprobe.runners.run_probe_experiment \
-  --config configs/experiments/llama2_task_b_base_ft.yaml
+  --config configs/experiments/llama2_task_b_corrected.yaml
 
 python -m harmprobe.runners.run_probe_experiment \
-  --config configs/experiments/qwen_task_b_base_ft.yaml
+  --config configs/experiments/qwen_task_b_corrected.yaml
 ```
 
 Look under `runs/<experiment>/html_vinfo_step_dashboard/` for:
@@ -177,9 +183,8 @@ Look under `runs/<experiment>/html_vinfo_step_dashboard/` for:
 - `*_test_vinfo_matrix.csv`
 - `harmful_vs_benign_vinfo_layer_profiles.png`
 
-The published example figures under `examples/figures/` use the
-**overfitting-corrected** probe settings above (PCA + repeated CV + 1-SE), not
-the default single-split experiment YAML alone.
+Legacy (uncorrected) configs remain as `configs/experiments/*_task_b_base_ft.yaml`
+if you need the older holdout probe path.
 
 ---
 

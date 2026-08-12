@@ -9,10 +9,8 @@ import yaml
 
 FINETUNED_CHECKPOINT_ALIASES = frozenset({"finetuned", "fine_tuned"})
 
-
 def is_finetuned_checkpoint(checkpoint: str) -> bool:
     return checkpoint in FINETUNED_CHECKPOINT_ALIASES
-
 
 def task_h5_paths_key(checkpoint: str, task_h5_paths: dict[str, Any]) -> str:
     """Resolve experiment checkpoint name to task YAML ``h5_paths`` key."""
@@ -27,13 +25,11 @@ def task_h5_paths_key(checkpoint: str, task_h5_paths: dict[str, Any]) -> str:
         raise KeyError(f"Checkpoint '{checkpoint}' not found in task h5_paths")
     return checkpoint
 
-
 def find_finetuned_checkpoint(checkpoints: list[str]) -> str | None:
     for checkpoint in checkpoints:
         if is_finetuned_checkpoint(checkpoint):
             return checkpoint
     return None
-
 
 def find_framework_root(start: Path | None = None) -> Path:
     cur = (start or Path(__file__).resolve()).parent
@@ -41,7 +37,6 @@ def find_framework_root(start: Path | None = None) -> Path:
         if (candidate / "configs").is_dir() and (candidate / "src").is_dir():
             return candidate
     raise FileNotFoundError("Could not locate jailbreak-layer-localization root")
-
 
 def find_workspace_root(start: Path | None = None) -> Path:
     """Locate workspace root for data path resolution.
@@ -62,11 +57,9 @@ def find_workspace_root(start: Path | None = None) -> Path:
             return candidate
     return find_framework_root(cur)
 
-
 def load_yaml(path: Path) -> dict[str, Any]:
     with path.open("r", encoding="utf-8") as f:
         return yaml.safe_load(f)
-
 
 def _resolve_layers(exp: dict[str, Any], n_layers: int) -> list[int]:
     if "layers" not in exp:
@@ -83,7 +76,6 @@ def _resolve_layers(exp: dict[str, Any], n_layers: int) -> list[int]:
             end = int(layers_cfg["end"])
             return list(range(start, end + 1))
     raise ValueError(f"Invalid layers config: {layers_cfg!r}")
-
 
 def _resolve_steps(exp: dict[str, Any], task: dict[str, Any]) -> list[int]:
     if "steps" in exp:
@@ -103,7 +95,6 @@ def _resolve_steps(exp: dict[str, Any], task: dict[str, Any]) -> list[int]:
         steps = [int(step) for step in task["steps"]]
     return steps
 
-
 def resolve_path(path_str: str, *, base: Path, workspace_root: Path) -> Path:
     p = Path(path_str)
     if p.is_absolute():
@@ -111,7 +102,6 @@ def resolve_path(path_str: str, *, base: Path, workspace_root: Path) -> Path:
     if path_str.startswith("jailbreak_llama3/"):
         return workspace_root / path_str
     return (base / path_str).resolve()
-
 
 def load_experiment_config(config_path: Path) -> dict[str, Any]:
     framework_root = find_framework_root(config_path.parent)
@@ -180,6 +170,25 @@ def load_experiment_config(config_path: Path) -> dict[str, Any]:
             exp["reference_outputs"], base=workspace_root, workspace_root=workspace_root
         )
 
+    oc_raw = task.get("overfitting_correction") or {}
+    if isinstance(oc_raw, bool):
+        oc_raw = {"enabled": oc_raw}
+    # Experiment-level override wins when present.
+    exp_oc = exp.get("overfitting_correction")
+    if isinstance(exp_oc, dict):
+        oc_raw = {**oc_raw, **exp_oc}
+    elif isinstance(exp_oc, bool):
+        oc_raw = {**oc_raw, "enabled": exp_oc}
+
+    overfitting_correction = {
+        "enabled": bool(oc_raw.get("enabled", False)),
+        "pca_components": int(oc_raw.get("pca_components", 30)),
+        "n_train_steps": int(oc_raw.get("n_train_steps", 12)),
+        "cv_folds": int(oc_raw.get("cv_folds", task.get("cv_folds", 5))),
+        "cv_repeats": int(oc_raw.get("cv_repeats", 3)),
+        "c_selection": str(oc_raw.get("c_selection", "one_se")),
+    }
+
     return {
         "framework_root": str(framework_root),
         "workspace_root": str(workspace_root),
@@ -202,7 +211,7 @@ def load_experiment_config(config_path: Path) -> dict[str, Any]:
         "split_mode": task.get("split_mode", "nested_15_15"),
         "test_size": float(task.get("test_size", 0.15)),
         "val_size": float(task.get("val_size", 0.15)),
-        "seed": int(task.get("seed", 42)),
+        "seed": int(task.get("seed", exp.get("seed", 42))),
         "max_iter": int(task.get("max_iter", 3000)),
         "checkpoints": exp.get("checkpoints", ["base", "fine_tuned"]),
         "layers": _resolve_layers(exp, int(model["n_layers"])),
@@ -210,4 +219,5 @@ def load_experiment_config(config_path: Path) -> dict[str, Any]:
         "output_dir": str(output_dir),
         "reference_outputs": str(reference_outputs) if reference_outputs else None,
         "task_type": task.get("task_type", "compliance_vs_refusal"),
+        "overfitting_correction": overfitting_correction,
     }
