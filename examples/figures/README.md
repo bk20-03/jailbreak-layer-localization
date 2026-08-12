@@ -1,4 +1,4 @@
-Reference Task B figures (anti-overfitting corrected runs):
+Reference figures (anti-overfitting corrected runs):
 
 - ``harmful_vs_benign_vinfo_layer_profiles.png`` — one subplot per layer;
   Base (blue) vs Fine-tuned (orange) V-info across generation steps.

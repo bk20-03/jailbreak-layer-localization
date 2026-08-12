@@ -1,4 +1,4 @@
-# Jailbreak Layer Localization (Task B)
+# Jailbreak Layer Localization
 
 **Main claim:** among *complied* generations, **adversarial harmful** vs **adversarial benign**
 hidden states are **linearly separable**, and that linear signal is **strongest in middle layers**
@@ -8,7 +8,7 @@ hidden states are **linearly separable**, and that linear signal is **strongest 
 this harmfulness distinction — i.e. where hidden states most strongly separate
 *adversarial harmful-complied* vs *adversarial benign-complied* responses.
 
-This repo reproduces **Task B** end-to-end:
+This repo reproduces the full pipeline end-to-end:
 
 1. **Dataset generation** — WildJailbreak `adversarial_harmful` and `adversarial_benign` pairs  
 2. **Hidden-state extraction** — all layers × 100 generation steps → HDF5  
@@ -28,7 +28,7 @@ across steps for every layer), from anti-overfitting corrected probe runs.
 
 ## Finding: linear separability peaks in middle layers
 
-Across **Llama-3.2-3B**, **Llama-2-7B-chat**, and **Qwen2.5-7B-Instruct** (corrected Task B
+Across **Llama-3.2-3B**, **Llama-2-7B-chat**, and **Qwen2.5-7B-Instruct** (corrected
 probes: PCA + repeated grouped CV + 1-SE):
 
 - **Early layers** (~first third): V-info near zero — little linearly recoverable
@@ -48,13 +48,13 @@ Evidence figures (one subplot per layer; Base blue, Fine-tuned orange):
 
 **Scope:** this is a **linear probe / V-info** localization result (where the distinction
 is most recoverable), not a causal proof that middle layers alone “cause” jailbreaks.
-Both classes are **complied** responses; Task B does not contrast compliance vs refusal.
+Both classes are **complied** responses; this study does **not** contrast compliance vs refusal.
 
 ---
 
 ## Supported models
 
-| Model | Config | Layers | Hidden dim | Task B matrix |
+| Model | Config | Layers | Hidden dim | V-info matrix |
 |-------|--------|--------|------------|---------------|
 | Llama-3.2-3B-Instruct | `configs/models/llama3_3b.yaml` | 28 | 3072 | 28 × 100 |
 | Llama-2-7B-chat | `configs/models/llama2_7b.yaml` | 32 | 4096 | 32 × 100 |
@@ -95,7 +95,9 @@ export HF_TOKEN=...   # if models/datasets are gated
 export HARMPROBE_FT_MODEL=/path/to/your-finetuned-checkpoint
 ```
 
-### 1) Generate Task B datasets (GPU)
+### 1) Generate datasets (GPU)
+
+Build adversarial harmful / adversarial benign complied pairs:
 
 | Model | Config |
 |-------|--------|
@@ -148,7 +150,9 @@ HDF5 outputs (gitignored):
 - `data/hiddens/llama2/`  
 - `data/hiddens/qwen/`  
 
-### 3) Probe Task B
+### 3) Run linear probes
+
+Train per-layer probes and write V-info matrices / profile figures:
 
 ```bash
 python -m harmprobe.runners.run_probe_experiment \
@@ -180,7 +184,7 @@ The probe runner also writes this figure to
 | **0** | Adversarial harmful prompt, model **complied** |
 | **1** | Adversarial benign prompt, model **complied** |
 
-Task B probe labels: class `1 → 0`, class `0 → 1` (see [`configs/tasks/task_b_benign_vs_harmful.yaml`](configs/tasks/task_b_benign_vs_harmful.yaml)).
+Probe label map: class `1 → 0`, class `0 → 1` (see [`configs/tasks/task_b_benign_vs_harmful.yaml`](configs/tasks/task_b_benign_vs_harmful.yaml)).
 
 ---
 
@@ -204,7 +208,7 @@ Primary figure (`harmful_vs_benign_vinfo_layer_profiles.png`):
 
 ```text
 configs/models/         llama3_3b, llama2_7b, qwen2_5_7b
-configs/datasets/       Task B WildJailbreak pipelines (per model)
+configs/datasets/       WildJailbreak harmful/benign pipelines (per model)
 configs/extraction/     class0/class1 × base/finetuned (per model)
 configs/experiments/    probing runs (per model)
 data/prompts/{llama3,llama2,qwen}/   committed prompt CSVs
@@ -231,5 +235,5 @@ pytest tests/ -q
 - Probing does not need a GPU once HDF5 files exist.  
 - Fine-tuned checkpoints are **not** redistributed; set `HARMPROBE_FT_MODEL` or YAML `model_path` per model.  
 - Published Qwen benign CSV is smaller (~265 rows) than the Llama dumps (~5k); extraction still takes the first 102.  
-- Task A (compliance vs refusal / class 2) is intentionally out of scope.  
+- Compliance vs refusal probing is intentionally out of scope.  
 - Do **not** treat FT − base V-info differences as primary results (probes are trained independently).
