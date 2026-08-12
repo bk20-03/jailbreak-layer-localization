@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "jailbreak-layer-localization"
 version = "0.1.0"
-description = "Task B: localize jailbreak-related harmfulness in LLM layers via dataset generation, hidden-state extraction, and linear probing"
+description = "Localize linear harmful-vs-benign representations in LLM layers via dataset generation, hidden-state extraction, and probing"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

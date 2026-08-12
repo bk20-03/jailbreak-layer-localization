@@ -44,8 +44,38 @@ Open these images (one panel per layer; blue = base, orange = fine-tuned):
 - Middle layers = highest curves (peak around layer **15** / **16** / **19** for Llama-3 / Llama-2 / Qwen)  
 - Late layers = still up, usually below the mid peak  
 
-Both classes are **complied** answers. This is about linear separability in
-representations — not a proof that middle layers “cause” jailbreaks.
+Both classes are **complied** answers. Probing shows where the harmful/benign
+contrast is **linearly recoverable**. Follow-up steering (below) tests whether
+middle layers also matter for **refusals**.
+
+### Steering: middle layers drive more refusals
+
+Probing alone does not prove causation. In follow-up **activation steering**
+experiments (separate from this repo’s code), we steered representations toward
+a refusal-related direction at different layers. **Middle-layer steering raised
+refusal rates more** than the same intervention at early or late layers. That
+matches the mid-layer V-info peak: those layers are not only where harmful vs
+benign is most linearly separable, they are also where steering most strongly
+shifts the model toward refusal.
+
+This repository ships the **localization / probing** pipeline and figures.
+Steering is supporting evidence for mid-layer importance, not part of the
+reproducible package above.
+
+### We corrected probe overfitting
+
+A first probe setup (train on all steps, weak regularization) can **overfit**:
+high train scores and inflated V-info, especially early in the network. The
+published figures above were re-run with an **anti-overfitting** recipe so the
+middle-layer peak is trustworthy:
+
+- PCA to 30 dimensions before the probe  
+- Train on **12** evenly spaced generation steps per prompt (still evaluate all 100)  
+- Repeated grouped cross-validation over prompts  
+- Stronger regularization via an extended `C` grid and the **1-SE** rule  
+
+After this correction, train–test gaps drop sharply (especially on Llama-3), and
+early-layer V-info falls near zero while the middle-layer peak remains.
 
 ---
 
@@ -147,8 +177,9 @@ Look under `runs/<experiment>/html_vinfo_step_dashboard/` for:
 - `*_test_vinfo_matrix.csv`
 - `harmful_vs_benign_vinfo_layer_profiles.png`
 
-The published example figures under `examples/figures/` come from stronger
-anti-overfitting probe settings (PCA + cross-validation) matching the analysis plots.
+The published example figures under `examples/figures/` use the
+**overfitting-corrected** probe settings above (PCA + repeated CV + 1-SE), not
+the default single-split experiment YAML alone.
 
 ---
 
@@ -183,5 +214,6 @@ tests/            Small unit tests
 
 - Dataset + extraction need GPU; probing does not (once HDF5 exists).  
 - Compare base and fine-tuned curves separately — don’t subtract FT − base matrices.  
-- This pipeline does **not** study refuse vs comply; only harmful-complied vs benign-complied.  
+- This pipeline studies harmful-complied vs benign-complied (not refuse vs comply);
+  refusal effects appear in the **steering** follow-up, not in these probe figures.  
 - Config filenames may still contain `task_b`; that is only a legacy name in the path.
