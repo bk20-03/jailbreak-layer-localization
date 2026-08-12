@@ -1,8 +1,12 @@
 # Jailbreak Layer Localization (Task B)
 
+**Main claim:** among *complied* generations, **adversarial harmful** vs **adversarial benign**
+hidden states are **linearly separable**, and that linear signal is **strongest in middle layers**
+(highest per-layer V-usable information under an L2 logistic probe).
+
 **Main objective:** localize which transformer layers (and generation steps) encode
-**jailbreak-related harmfulness** — i.e. where hidden states most strongly separate
-*harmful complied* vs *benign complied* responses.
+this harmfulness distinction — i.e. where hidden states most strongly separate
+*adversarial harmful-complied* vs *adversarial benign-complied* responses.
 
 This repo reproduces **Task B** end-to-end:
 
@@ -18,7 +22,33 @@ this repository; see
 for that method. Do **not** subtract FT − base matrices (probes are trained independently).
 
 Primary example figures are **per-layer profile grids** (Base vs Fine-tuned V-info
-across steps for every layer), matching the analysis style of `output1.png`.
+across steps for every layer), from anti-overfitting corrected probe runs.
+
+---
+
+## Finding: linear separability peaks in middle layers
+
+Across **Llama-3.2-3B**, **Llama-2-7B-chat**, and **Qwen2.5-7B-Instruct** (corrected Task B
+probes: PCA + repeated grouped CV + 1-SE):
+
+- **Early layers** (~first third): V-info near zero — little linearly recoverable
+  harmful-vs-benign signal.
+- **Middle layers**: **highest** mean V-info — adversarial harmful-complied vs
+  adversarial benign-complied states are easiest to separate with a linear probe.
+  Peak base layers ≈ **15** (Llama-3), **16** (Llama-2), **19** (Qwen).
+- **Late layers**: still informative, but usually below the mid-layer peak.
+
+Evidence figures (one subplot per layer; Base blue, Fine-tuned orange):
+
+| Model | Figure |
+|-------|--------|
+| Llama-3 | [`examples/figures/llama3/harmful_vs_benign_vinfo_layer_profiles.png`](examples/figures/llama3/harmful_vs_benign_vinfo_layer_profiles.png) |
+| Llama-2 | [`examples/figures/llama2/harmful_vs_benign_vinfo_layer_profiles.png`](examples/figures/llama2/harmful_vs_benign_vinfo_layer_profiles.png) |
+| Qwen | [`examples/figures/qwen/harmful_vs_benign_vinfo_layer_profiles.png`](examples/figures/qwen/harmful_vs_benign_vinfo_layer_profiles.png) |
+
+**Scope:** this is a **linear probe / V-info** localization result (where the distinction
+is most recoverable), not a causal proof that middle layers alone “cause” jailbreaks.
+Both classes are **complied** responses; Task B does not contrast compliance vs refusal.
 
 ---
 
@@ -131,9 +161,12 @@ python -m harmprobe.runners.run_probe_experiment \
   --config configs/experiments/qwen_task_b_base_ft.yaml
 ```
 
-Primary figures from validated runs (one subplot per layer; Base vs Fine-tuned):
+Primary figures from validated **corrected** runs (one subplot per layer; Base vs Fine-tuned):
 
 [`examples/figures/`](examples/figures/) → `*/harmful_vs_benign_vinfo_layer_profiles.png`
+
+These figures are the main evidence that middle-layer V-info is highest for
+adversarial harmful-complied vs adversarial benign-complied separation.
 
 The probe runner also writes this figure to
 `runs/<experiment>/html_vinfo_step_dashboard/harmful_vs_benign_vinfo_layer_profiles.png`.
@@ -158,8 +191,12 @@ Primary figure (`harmful_vs_benign_vinfo_layer_profiles.png`):
 - One subplot **per layer** (all layers in one figure)  
 - X-axis = generation step; Y-axis = V-info (bits)  
 - Blue = base, orange = fine-tuned (DSA)  
-- Higher curve = stronger recoverable harmful-vs-benign signal at that layer/step  
-- Compare curves visually; do not treat FT − base as a primary result  
+- Higher curve = stronger **linear** recoverability of adversarial harmful vs
+  adversarial benign (both complied)  
+- **What to look for:** early layers near zero; **middle layers** with the tallest
+  Base curves (peak linear separability); late layers still elevated but usually
+  below the mid peak  
+- Compare Base vs Fine-tuned visually; do not treat FT − base as a primary result  
 
 ---
 
