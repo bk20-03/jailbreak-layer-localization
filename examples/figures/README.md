@@ -1,11 +1,6 @@
-Reference figures (anti-overfitting corrected runs):
+Example result plots (corrected probe runs).
 
-- ``harmful_vs_benign_vinfo_layer_profiles.png`` — one subplot per layer;
-  Base (blue) vs Fine-tuned (orange) V-info across generation steps.
-
-**Claim these figures support:** adversarial harmful-complied vs adversarial
-benign-complied hidden states are linearly separable, with **highest V-info in
-middle layers** (early ≈ 0; late informative but usually below the mid peak).
-
-``llama3/``, ``llama2/``, and ``qwen/`` all use corrected probes (PCA + repeated
-grouped CV + 1-SE). FT−base difference plots are intentionally omitted.
+``harmful_vs_benign_vinfo_layer_profiles.png`` — one panel per layer;
+Base (blue) vs Fine-tuned (orange). Higher V-info = easier linear separation of
+adversarial harmful-complied vs adversarial benign-complied. Peak signal is in
+the **middle layers**.
