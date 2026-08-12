@@ -6,6 +6,7 @@ answers easiest to tell apart with a simple linear probe.
 **Short answer from the results:** early layers barely show the difference;
 **middle layers** show it most clearly; late layers still show it, but usually less
 than the middle. Example plots for three models live in [`examples/figures/`](examples/figures/).
+Those plots use **overfitting-corrected** probes (see below), not the first naive probe pass.
 
 ---
 
